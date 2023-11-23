@@ -4,12 +4,12 @@
 package log
 
 type Logger interface {
-	Info(value string, args ...any)
-	Debug(value string, args ...any)
-	Warn(value string, args ...any)
-	Error(value string, args ...any)
-	Panic(value string, args ...any)
-	Fatal(value string, args ...any)
+	Info(msg string, args ...any)
+	Debug(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+	Panic(msg string, args ...any)
+	Fatal(msg string, args ...any)
 }
 
 var log Logger
@@ -17,4 +17,28 @@ var log Logger
 // Use 绑定全局日志
 func Use(l Logger) {
 	log = l
+}
+
+func Info(msg string, args ...any) {
+	log.Info(msg, args)
+}
+
+func Debug(msg string, args ...any) {
+	log.Debug(msg, args)
+}
+
+func Warn(msg string, args ...any) {
+	log.Warn(msg, args)
+}
+
+func Error(msg string, args ...any) {
+	log.Error(msg, args)
+}
+
+func Panic(msg string, args ...any) {
+	log.Panic(msg, args)
+}
+
+func Fatal(msg string, args ...any) {
+	log.Fatal(msg, args)
 }
