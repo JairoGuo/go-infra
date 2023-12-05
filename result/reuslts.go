@@ -1,5 +1,7 @@
 package result
 
+import "github.com/jairoguo/go-infra/result/code"
+
 type ResponseBody struct {
 	Code    int    `json:"code"`
 	Status  string `json:"status"`
@@ -11,9 +13,9 @@ type ResponseBody struct {
 
 type Option func(*ResponseBody)
 
-func WithCode(code int) Option {
+func WithCode(code code.StatusCode) Option {
 	return func(body *ResponseBody) {
-		body.Code = code
+		body.Code = int(code)
 	}
 }
 
@@ -59,8 +61,8 @@ type ResponseBodyBuilder struct {
 	body ResponseBody
 }
 
-func (builder *ResponseBodyBuilder) Code(code int) *ResponseBodyBuilder {
-	builder.body.Code = code
+func (builder *ResponseBodyBuilder) Code(code code.StatusCode) *ResponseBodyBuilder {
+	builder.body.Code = int(code)
 	return builder
 }
 
@@ -95,4 +97,24 @@ func (builder *ResponseBodyBuilder) Build() ResponseBody {
 
 func Builder() *ResponseBodyBuilder {
 	return &ResponseBodyBuilder{}
+}
+
+func OK() ResponseBody {
+	return With(WithCode(code.OK), WithMsg(code.OK.Info()))
+}
+
+func OkWithData(data any) ResponseBody {
+	return With(WithCode(code.OK), WithData(data), WithMsg(code.OK.Info()))
+}
+
+func Fail() ResponseBody {
+	return With(WithCode(code.ERR), WithMsg(code.ERR.Info()))
+}
+
+func FailWithMessage(msg string) ResponseBody {
+	return With(WithCode(code.ERR), WithMsg(msg))
+}
+
+func Code(code code.StatusCode) ResponseBody {
+	return With(WithCode(code), WithMsg(code.Info()))
 }

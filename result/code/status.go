@@ -1,4 +1,4 @@
-package result
+package code
 
 type StatusCode int
 
@@ -25,6 +25,14 @@ func with(cs StatusCode, code string, info string) {
 
 func (code StatusCode) Value() StatusInfo {
 	return statusCodeMap[int(code)]
+}
+
+func (code StatusCode) Code() string {
+	return statusCodeMap[int(code)].Code
+}
+
+func (code StatusCode) Info() string {
+	return statusCodeMap[int(code)].Info
 }
 
 func (code StatusCode) String() string {
