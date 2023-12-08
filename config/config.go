@@ -16,50 +16,51 @@ const (
 	defaultFiletype = YAML
 )
 
-type Param struct {
-	Filename       string
-	FileType       FileType
-	EnableMultiEnv bool
+type param struct {
+	filename       string
+	fileDir        string
+	fileType       FileType
+	enableMultiEnv bool
 }
 
-type Option func(*Param)
+type Option func(*param)
 
 func WithFilename(filename string) Option {
-	return func(param *Param) {
-		param.Filename = filename
+	return func(param *param) {
+		param.filename = filename
 	}
 }
 
 func WithFileType(filetype FileType) Option {
-	return func(param *Param) {
-		param.FileType = filetype
+	return func(param *param) {
+		param.fileType = filetype
 	}
 }
 
 func WithMultiEnv(multiEnv bool) Option {
-	return func(param *Param) {
-		param.EnableMultiEnv = multiEnv
+	return func(param *param) {
+		param.enableMultiEnv = multiEnv
 	}
 }
 
 // 优先级: 命令行 > 环境变量 > 默认值
 
-func BindConfiguration(rawVal any, opts ...Option) {
+func BindConfiguration(rawVal any, opts ...Option) *viper.Viper {
 
-	param := &Param{
-		FileType: UNSET,
+	param := &param{
+		fileType: UNSET,
 	}
 	for _, opt := range opts {
 		opt(param)
 	}
 
-	handle(rawVal, *param)
+	return handle(rawVal, *param)
 }
 
-func handle(rawVal any, param Param) *viper.Viper {
+func handle(rawVal any, param param) *viper.Viper {
 	var config string
 
-	if param.Filename == "" {
+	if param.filename == "" {
 		var configByParamC string
 		var configByParamConfig string
 
@@ -78,34 +79,35 @@ func handle(rawVal any, param Param) *viper.Viper {
 		if config == "" { // 判断命令行参数是否为空
 			if configEnv := os.Getenv(env); configEnv == "" { // 判断 internal.Env 常量存储的环境变量是否为空
 				config = defaultFilename
-				param.FileType = defaultFiletype
+				param.fileType = defaultFiletype
 			} else {
-				config = configEnv
-				param.EnableMultiEnv = false
+				config = isExtensionFile(config, &param)
+				param.enableMultiEnv = false
 			}
 		} else {
-			param.EnableMultiEnv = false
+			config = isExtensionFile(config, &param)
+			param.enableMultiEnv = false
 		}
 
 	} else {
-		config = isExtensionFile(param.Filename, &param)
+		config = isExtensionFile(param.filename, &param)
 	}
 
-	if param.FileType == UNSET {
-		param.FileType = defaultFiletype
+	if param.fileType == UNSET {
+		param.fileType = defaultFiletype
 	}
 
 	return toViper(rawVal, config, param)
 
 }
 
-func toViper(rawVal any, config string, param Param) *viper.Viper {
+func toViper(rawVal any, config string, param param) *viper.Viper {
 	v := viper.New()
 
-	if param.EnableMultiEnv {
+	if param.enableMultiEnv {
 		multiEnvViper := viper.New()
 		multiEnvViper.SetConfigFile(getFile(config, param))
-		multiEnvViper.SetConfigType(param.FileType.String())
+		multiEnvViper.SetConfigType(param.fileType.String())
 		err := multiEnvViper.ReadInConfig()
 		if err != nil {
 			panic(fmt.Errorf("Fatal error config file: %s \n", err))
@@ -113,7 +115,7 @@ func toViper(rawVal any, config string, param Param) *viper.Viper {
 		envValue := multiEnvViper.Get("env")
 		if envValue != nil {
 			mode := ParseMode(envValue.(string))
-			config = SwitchMode(config, mode, param.FileType)
+			config = switchMode(config, mode, param.fileType)
 		}
 
 		multiEnvViper.OnConfigChange(func(e fsnotify.Event) {
@@ -121,7 +123,7 @@ func toViper(rawVal any, config string, param Param) *viper.Viper {
 			envValue := multiEnvViper.Get("env")
 			if envValue != "" {
 				mode := ParseMode(envValue.(string))
-				config = SwitchMode(config, mode, param.FileType)
+				config = switchMode(config, mode, param.fileType)
 			}
 			v.SetConfigFile(config)
 			readConfig(v, rawVal)
@@ -130,7 +132,7 @@ func toViper(rawVal any, config string, param Param) *viper.Viper {
 	}
 
 	v.SetConfigFile(getFile(config, param))
-	v.SetConfigType(param.FileType.String())
+	v.SetConfigType(param.fileType.String())
 	readConfig(v, rawVal)
 
 	v.WatchConfig()
@@ -153,7 +155,7 @@ func readConfig(v *viper.Viper, rawVal any) {
 	}
 }
 
-func SwitchMode(config string, mode Mode, fileType FileType) string {
+func switchMode(config string, mode Mode, fileType FileType) string {
 
 	if mode == DEFAULT {
 		return config
@@ -162,29 +164,34 @@ func SwitchMode(config string, mode Mode, fileType FileType) string {
 
 }
 
-func isExtensionFile(config string, param *Param) string {
-	is, _ := assert.Is(param.Filename, assert.FILENAME)
+func isExtensionFile(config string, param *param) string {
+	is, _ := assert.Is(param.filename, assert.FILENAME)
 	if is {
-		config = handleExtensionFile(param.Filename, param)
+		config = handleExtensionFile(param.filename, param)
 	} else {
-		if param.FileType == UNSET {
-			param.FileType = defaultFiletype
+		if param.fileType == UNSET {
+			param.fileType = defaultFiletype
 		}
 	}
 
 	return config
 }
 
-func handleExtensionFile(filename string, param *Param) string {
+func handleExtensionFile(filename string, param *param) string {
 	fileName := filepath.Base(filename)
+	dir := filepath.Dir(filename)
 	fileExt := filepath.Ext(fileName)
-	param.FileType = ParseFileType(fileExt[1:])
+	config := fileName[:len(fileName)-len(filepath.Ext(fileName))]
 
-	return filename
+	param.fileType = ParseFileType(fileExt[1:])
+	param.fileDir = dir
+
+	return config
 
 }
 
-func getFile(config string, param Param) string {
-	return fmt.Sprintf("%v.%v", config, param.FileType.String())
+func getFile(config string, param param) string {
+
+	return filepath.Join(param.fileDir, fmt.Sprintf("%v.%v", config, param.fileType.String()))
 
 }
