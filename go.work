@@ -9,4 +9,5 @@ use (
 	concurrent/lock
 	result
 	config
+	errors
 )
