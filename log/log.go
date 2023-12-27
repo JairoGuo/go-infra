@@ -4,12 +4,12 @@
 package log
 
 type Logger interface {
-	Info(msg string, args ...any)
-	Debug(msg string, args ...any)
-	Warn(msg string, args ...any)
-	Error(msg string, args ...any)
-	Panic(msg string, args ...any)
-	Fatal(msg string, args ...any)
+	Info(msg string, fields []Field)
+	Debug(msg string, fields []Field)
+	Warn(msg string, fields []Field)
+	Error(msg string, fields []Field)
+	Panic(msg string, fields []Field)
+	Fatal(msg string, fields []Field)
 }
 
 var log Logger
@@ -20,25 +20,31 @@ func Use(l Logger) {
 }
 
 func Info(msg string, args ...any) {
-	log.Info(msg, args)
+	fields := handleArgs(args...)
+	log.Info(msg, fields)
 }
 
 func Debug(msg string, args ...any) {
-	log.Debug(msg, args)
+	fields := handleArgs(args...)
+	log.Debug(msg, fields)
 }
 
 func Warn(msg string, args ...any) {
-	log.Warn(msg, args)
+	fields := handleArgs(args...)
+	log.Warn(msg, fields)
 }
 
 func Error(msg string, args ...any) {
-	log.Error(msg, args)
+	fields := handleArgs(args...)
+	log.Error(msg, fields)
 }
 
 func Panic(msg string, args ...any) {
-	log.Panic(msg, args)
+	fields := handleArgs(args...)
+	log.Panic(msg, fields)
 }
 
 func Fatal(msg string, args ...any) {
-	log.Fatal(msg, args)
+	fields := handleArgs(args...)
+	log.Fatal(msg, fields)
 }

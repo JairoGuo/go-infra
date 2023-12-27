@@ -1,7 +1,8 @@
 package core
 
 import (
-	logzap "github.com/jairoguo/go-infra/log/zap"
+	"github.com/jairoguo/go-infra/log/core"
+	"github.com/jairoguo/go-infra/log/zap/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
@@ -12,11 +13,11 @@ import (
 var ZapOption = new(option)
 
 type option struct {
-	logzap.Config
+	config.Config
 }
 
 // GetZapCores 根据配置文件的Level获取 []zapcore.Core
-func (opt *option) GetZapCores(c logzap.Config) []zapcore.Core {
+func (opt *option) GetZapCores(c config.Config) []zapcore.Core {
 
 	cores := make([]zapcore.Core, 0, 7)
 	for level := TransportLevel(opt.Level); level <= zapcore.FatalLevel; level++ {
@@ -63,7 +64,7 @@ func (opt *option) CustomTimeEncoder(t time.Time, encoder zapcore.PrimitiveArray
 
 // GetWriteSyncer 获取 zapcore.WriteSyncer
 func (opt *option) GetWriteSyncer(level string) zapcore.WriteSyncer {
-	fileWriter := NewCutter(opt.Director, level, WithCutterFormat("2006-01-02"))
+	fileWriter := core.NewCutter(opt.Director, level, core.WithCutterFormat("2006-01-02"))
 	if opt.OutConsole {
 		return zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(fileWriter))
 	}

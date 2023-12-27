@@ -13,26 +13,41 @@ func NewLogSlog(handler slog.Handler) log.Logger {
 	return &LogSlog{}
 }
 
-func (l *LogSlog) Info(msg string, args ...any) {
-	slog.Info(msg, args...)
+func (l *LogSlog) Info(msg string, fields []log.Field) {
+	slog.Info(msg, getFields(fields)...)
 }
 
-func (l *LogSlog) Debug(msg string, args ...any) {
-	slog.Debug(msg, args...)
+func (l *LogSlog) Debug(msg string, fields []log.Field) {
+	slog.Debug(msg, getFields(fields)...)
 }
 
-func (l *LogSlog) Warn(msg string, args ...any) {
-	slog.Warn(msg, args...)
+func (l *LogSlog) Warn(msg string, fields []log.Field) {
+	slog.Warn(msg, getFields(fields)...)
 }
 
-func (l *LogSlog) Error(msg string, args ...any) {
-	slog.Error(msg, args...)
+func (l *LogSlog) Error(msg string, fields []log.Field) {
+	slog.Error(msg, getFields(fields)...)
 }
 
-func (l *LogSlog) Panic(msg string, args ...any) {
+func (l *LogSlog) Panic(msg string, fields []log.Field) {
 
 }
 
-func (l *LogSlog) Fatal(msg string, args ...any) {
+func (l *LogSlog) Fatal(msg string, fields []log.Field) {
 
+}
+
+func getFields(fields []log.Field) []any {
+	var argsFields []any
+
+	for _, field := range fields {
+		if field.Key != "" {
+			argsFields = append(argsFields, field.Key)
+			argsFields = append(argsFields, field.Value)
+		} else {
+			argsFields = append(argsFields, field.Value)
+		}
+	}
+
+	return argsFields
 }
