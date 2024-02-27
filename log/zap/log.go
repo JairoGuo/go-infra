@@ -4,7 +4,7 @@ import (
 	"github.com/jairoguo/go-infra/log"
 	"github.com/jairoguo/go-infra/log/zap/config"
 	"github.com/jairoguo/go-infra/log/zap/core"
-	utilos "github.com/jairoguo/go-infra/util/os"
+	utilos "github.com/jairoguo/go-infra/util/path"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
@@ -26,16 +26,18 @@ func NewLogZapByConfig(c config.Config) log.Logger {
 	}
 }
 
-func buildZapLoggerByConfig(config config.Config) (logger *zap.Logger) {
+func buildZapLoggerByConfig(c config.Config) (logger *zap.Logger) {
 
-	if ok, _ := utilos.PathExists(config.Director); !ok { // 判断是否有Director文件夹
-		_ = os.Mkdir(config.Director, os.ModePerm)
+	core.BindConfig(c)
+
+	if ok, _ := utilos.PathExists(c.Director); !ok { // 判断是否有Director文件夹
+		_ = os.Mkdir(c.Director, os.ModePerm)
 	}
 
-	cores := core.ZapOption.GetZapCores(config)
+	cores := core.ZapOption.GetZapCores(c)
 	logger = zap.New(zapcore.NewTee(cores...))
 
-	if config.ShowLine {
+	if c.ShowLine {
 		logger = logger.WithOptions(zap.AddCaller())
 	}
 	return logger

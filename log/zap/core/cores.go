@@ -10,10 +10,16 @@ import (
 	"time"
 )
 
-var ZapOption = new(option)
+var ZapOption *option
 
 type option struct {
 	config.Config
+}
+
+func BindConfig(c config.Config) {
+	ZapOption = &option{
+		c,
+	}
 }
 
 // GetZapCores 根据配置文件的Level获取 []zapcore.Core
