@@ -12,12 +12,14 @@ import (
 
 type Error interface {
 	error
+	WithMsg(msg string) Error
 	WithKey(key string) Error
 }
 
 type defaultError struct {
 	error      error
 	Key        string
+	Msg        string
 	EnableI18n bool
 	i18n       ErrorI18n
 }
@@ -27,6 +29,12 @@ type Option func(*defaultError)
 func WithKey(key string) Option {
 	return func(e *defaultError) {
 		e.Key = key
+	}
+}
+
+func WithMsg(msg string) Option {
+	return func(e *defaultError) {
+		e.Msg = msg
 	}
 }
 
@@ -82,6 +90,11 @@ func (e *defaultError) WithKey(key string) Error {
 	return e
 }
 
+func (e *defaultError) WithMsg(msg string) Error {
+	e.Msg = msg
+	return e
+}
+
 func Wrap(err error, text string) error {
 	return fmt.Errorf(text+"error: %w", err)
 }
@@ -95,7 +108,7 @@ func Unwrap(err error) error {
 }
 
 func (e *defaultError) Is(target error) bool {
-	return errors.Is(e, target)
+	return errors.Is(e.error, target)
 }
 
 func Is(err error, target error) bool {
@@ -103,9 +116,18 @@ func Is(err error, target error) bool {
 }
 
 func (e *defaultError) As(target any) bool {
-	return errors.As(e, &target)
+	return errors.As(e.error, &target)
 }
 
 func As(err error, target any) bool {
 	return errors.As(err, &target)
+}
+
+func (e *defaultError) Join(errs ...error) error {
+	errs = append([]error{e.error}, errs...)
+	return errors.Join(errs...)
+}
+
+func Join(errs ...error) error {
+	return errors.Join(errs...)
 }
