@@ -12,4 +12,5 @@ use (
 	errors
 	service
 	server/http
+	server/http/client
 )
